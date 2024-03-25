@@ -1,65 +1,64 @@
 document.addEventListener('DOMContentLoaded', function () {
-    var addTaskBtn = document.getElementById('addTask');
-    var taskInput = document.getElementById('taskInput');
-    var taskList = document.getElementById('taskList');
-    var showAllBtn = document.getElementById('showAll');
-    var showIncompleteBtn = document.getElementById('showIncomplete');
-    var showCompletedBtn = document.getElementById('showCompleted');
-    var deleteCompletedBtn = document.getElementById('deleteCompleted');
-  
-    addTaskBtn.addEventListener('click', function () {
-      var taskText = taskInput.value.trim();
-      if (taskText !== '') {
-        var listItem = document.createElement('li');
-        listItem.innerHTML = `
-          <input type="checkbox">
-          <span>${taskText}</span>
-        `;
-        taskList.appendChild(listItem);
-        taskInput.value = '';
-      }
-    });
-  
-    showAllBtn.addEventListener('click', function () {
-      showTasks(taskList, 'li');
-    });
-  
-    showIncompleteBtn.addEventListener('click', function () {
-      showTasks(taskList, 'li:not(:has(input:checked))');
-    });
-  
-    showCompletedBtn.addEventListener('click', function () {
-      showTasks(taskList, 'li:has(input:checked)');
-    });
+  var taskInput = document.getElementById('taskInput');
+  var addTaskBtn = document.getElementById('addTask');
+  var taskList = document.getElementById('taskList');
+  var deleteCompletedBtn = document.getElementById('deleteCompleted');
 
-    deleteCompletedBtn.addEventListener('click', function () {
-      var completedTasks = taskList.querySelectorAll('li.completed');
-      completedTasks.forEach(function (task) {
-        task.remove();
-      });
-    });
-  
-    function showTasks(container, selector) {
-      var tasksToShow = container.querySelectorAll(selector);
-      container.querySelectorAll('li').forEach(function (task) {
-        task.style.display = 'none';
-      });
-      tasksToShow.forEach(function (task) {
-        task.style.display = 'block';
-      });
+  // Отримуємо збережені дані з localStorage при завантаженні сторінки
+  var savedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+  // Відтворюємо список завдань з localStorage
+  savedTasks.forEach(function (taskText) {
+    addTaskToList(taskText);
+  });
+
+  // Додаємо нове завдання до списку та зберігаємо його в localStorage
+  function addTaskToList(taskText) {
+    var listItem = document.createElement('li');
+    listItem.innerHTML = `
+      <input type="checkbox">
+      <span>${taskText}</span>
+    `;
+    taskList.appendChild(listItem);
+  }
+
+  addTaskBtn.addEventListener('click', function () {
+    var taskText = taskInput.value.trim();
+    if (taskText !== '') {
+      addTaskToList(taskText);
+      // Зберігаємо завдання в localStorage
+      savedTasks.push(taskText);
+      localStorage.setItem('tasks', JSON.stringify(savedTasks));
+      taskInput.value = ''; // Очищаємо поле вводу
     }
-  
-    taskList.addEventListener('change', function (event) {
-      if (event.target.tagName === 'INPUT' && event.target.type === 'checkbox') {
-        var listItem = event.target.closest('li');
-        if (listItem) {
-          if (event.target.checked) {
-            listItem.classList.add('completed');
-          } else {
-            listItem.classList.remove('completed');
-          }
+  });
+
+  // Видалення завершених завдань та оновлення localStorage
+  deleteCompletedBtn.addEventListener('click', function () {
+    var completedTasks = taskList.querySelectorAll('input:checked');
+    completedTasks.forEach(function (completedTask) {
+      var listItem = completedTask.closest('li');
+      var taskText = listItem.querySelector('span').textContent;
+      var index = savedTasks.indexOf(taskText);
+      if (index !== -1) {
+        savedTasks.splice(index, 1);
+      }
+      listItem.remove();
+    });
+    localStorage.setItem('tasks', JSON.stringify(savedTasks));
+  });
+
+  // Додавання класу 'completed' при відмічанні завдання як виконане (залишено цю частину для повноти)
+  taskList.addEventListener('change', function (event) {
+    if (event.target.tagName === 'INPUT' && event.target.type === 'checkbox') {
+      var listItem = event.target.closest('li');
+      if (listItem) {
+        if (event.target.checked) {
+          listItem.classList.add('completed');
+        } else {
+          listItem.classList.remove('completed');
         }
       }
-    });
+    }
   });
-  
+});
